@@ -6,6 +6,8 @@
 	<string>com.nhkhang.alfred</string>
 	<key>connections</key>
 	<dict>
+		<key>1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D</key>
+		<array/>
 		<key>7C2E8E3F-9A1B-4C5D-8E2F-3A4B5C6D7E8F</key>
 		<array>
 			<dict>
@@ -49,7 +51,7 @@
 				<key>argumenttype</key>
 				<integer>2</integer>
 				<key>keyword</key>
-				<string>mvc</string>
+				<string>mv</string>
 				<key>subtext</key>
 				<string>Toggle Mullvad VPN connection</string>
 				<key>text</key>
@@ -72,7 +74,20 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>./toggle_connection.sh</string>
+				<string>#!/bin/bash
+
+# Check current Mullvad status
+status=$(mullvad status)
+
+if echo "$status" | grep -q "Connected"; then
+    # Currently connected, so disconnect
+    mullvad disconnect
+    echo "dis"
+else
+    # Currently disconnected, so connect
+    mullvad connect
+    echo "conn"
+fi</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -103,7 +118,7 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>keyword</key>
-				<string>mvs</string>
+				<string>mvc</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -166,8 +181,8 @@
 Requires mullvad cli to be installed.
 
 Commands:
-- mvc: Toggle Mullvad connection on/off
-- mvs [country]: Search and connect to a specific country
+- mv: Toggle Mullvad connection on/off
+- mvc [country/city]: Search and connect to a specific country/city
 
 The workflow will connect to the first server in the selected country by default.</string>
 	<key>uidata</key>
@@ -175,30 +190,30 @@ The workflow will connect to the first server in the selected country by default
 		<key>1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D</key>
 		<dict>
 			<key>xpos</key>
-			<real>380</real>
+			<real>375</real>
 			<key>ypos</key>
-			<real>100</real>
+			<real>335</real>
 		</dict>
 		<key>2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7E</key>
 		<dict>
 			<key>xpos</key>
 			<real>380</real>
 			<key>ypos</key>
-			<real>250</real>
+			<real>500</real>
 		</dict>
 		<key>7C2E8E3F-9A1B-4C5D-8E2F-3A4B5C6D7E8F</key>
 		<dict>
 			<key>xpos</key>
-			<real>180</real>
+			<real>170</real>
 			<key>ypos</key>
-			<real>100</real>
+			<real>335</real>
 		</dict>
 		<key>9B8A7C6D-5E4F-3A2B-1C0D-9E8F7A6B5C4D</key>
 		<dict>
 			<key>xpos</key>
 			<real>180</real>
 			<key>ypos</key>
-			<real>250</real>
+			<real>500</real>
 		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
@@ -206,7 +221,7 @@ The workflow will connect to the first server in the selected country by default
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>0.0.1</string>
+	<string>0.0.2</string>
 	<key>webaddress</key>
 	<string>nhkhang.com</string>
 </dict>
