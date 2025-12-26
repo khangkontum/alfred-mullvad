@@ -1,23 +1,21 @@
 #!/bin/bash
 
 # Arguments:
-# $1 - Country code (required, e.g., "us", "se", "uk")
-# $2 - City number (optional, defaults to 1)
+# $1 - Location code (e.g., "us" for country, "us nyc" for city)
 
 if [ -z "$1" ]; then
-    echo "Error: Country code required"
+    echo "Error: Location code required"
     exit 1
 fi
 
-country_code="$1"
-city_num="${2:-1}"
+location="$1"
 
-# Set the relay location to the country code
-echo "Setting relay location to $country_code..."
-mullvad relay set location "$country_code"
+# Set the relay location (handles both "us" and "us nyc" formats)
+echo "Setting relay location to $location..."
+mullvad relay set location $location
 
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to set location to '$country_code'"
+    echo "Error: Failed to set location to '$location'"
     exit 1
 fi
 

@@ -20,49 +20,56 @@ EOF
     exit 0
 fi
 
-# Parse countries from relay list
-# Format: "Country Name (code)"
-countries=$(echo "$relay_output" | grep -E "^[A-Z].*\([a-z]{2}\)" | sed -E 's/^(.+) \(([a-z]{2})\)$/\2|\1/')
+# Parse countries and cities with awk
+locations=$(echo "$relay_output" | awk '
+    /^[A-Z].*\([a-z]{2}\)$/ {
+        # Extract country info
+        line = $0
+        gsub(/ \([a-z]{2}\)$/, "", line)
+        country_name = line
+
+        # Get country code from last 3 chars before )
+        n = length($0)
+        country_code = substr($0, n-2, 2)
+
+        print "country|" country_code "|" country_name "||" country_name
+    }
+    /^\t[^\t].*\([a-z]{3}\) @/ {
+        # Extract city info
+        line = $0
+        sub(/^\t/, "", line)
+        sub(/ @.*$/, "", line)
+
+        # Get city code (3 chars before closing paren)
+        n = length(line)
+        city_code = substr(line, n-3, 3)
+
+        # Get city name
+        sub(/ \([a-z]{3}\)$/, "", line)
+        city_name = line
+
+        print "city|" country_code "|" city_code "|" city_name "|" country_name
+    }
+')
 
 # Filter by query if provided
 if [ -n "$query" ]; then
-    countries=$(echo "$countries" | grep -i "$query")
+    locations=$(echo "$locations" | grep -i "$query")
 fi
 
-# Build JSON output
-echo '{"items":['
+# Build JSON output using jq for speed
+items=$(echo "$locations" | while IFS='|' read -r type country_code city_code name parent_country; do
+    [ -z "$type" ] && continue
 
-first=true
-while IFS='|' read -r code name; do
-    [ -z "$code" ] && continue
-
-    if [ "$first" = true ]; then
-        first=false
+    if [ "$type" = "country" ]; then
+        printf '%s\n' "{\"title\":\"$city_code\",\"subtitle\":\"Country · Connect to $city_code ($country_code)\",\"arg\":\"$country_code\",\"autocomplete\":\"$city_code\",\"icon\":{\"path\":\"icon.png\"}}"
     else
-        echo ","
+        printf '%s\n' "{\"title\":\"$name\",\"subtitle\":\"City in $parent_country · Connect to $name ($city_code)\",\"arg\":\"$country_code $city_code\",\"autocomplete\":\"$name\",\"icon\":{\"path\":\"icon.png\"}}"
     fi
+done | paste -sd ',' -)
 
-    cat <<EOF
-    {
-      "title": "$name",
-      "subtitle": "Connect to $name (code: $code)",
-      "arg": "$code",
-      "autocomplete": "$name",
-      "icon": {
-        "path": "icon.png"
-      }
-    }
-EOF
-done <<< "$countries"
-
-if [ "$first" = true ]; then
-    cat <<EOF
-    {
-      "title": "No countries found",
-      "subtitle": "Try a different search term",
-      "valid": false
-    }
-EOF
+if [ -z "$items" ]; then
+    echo '{"items":[{"title":"No locations found","subtitle":"Try a different search term","valid":false}]}'
+else
+    echo "{\"items\":[$items]}"
 fi
-
-echo ']}'
